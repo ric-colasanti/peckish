@@ -11,6 +11,7 @@ to setup
   ;; links.
   ask patches [
     sprout-places 1
+    set pcolor random-float 2
     ;;set pcolor one-of (list ((random 14) * 10 + 6 ) ((random 14) * 10 + 3 ))
   ]
   ;; Now create the links. Note that some turtles will try to create
@@ -19,9 +20,13 @@ to setup
   ;; links that already exist.
   ask places [
     set color yellow
-    create-links-with places-on neighbors4
+    let targets places-on neighbors4
+    create-links-with  targets
     set place-type "urban"
     hide-turtle
+    ask my-links[
+        hide-link
+    ]
   ]
   ;; Add hubs.Highly connected places
   repeat hubs [
@@ -30,10 +35,10 @@ to setup
       repeat hub-links[
         let target  one-of places
         create-link-with target
-        ask target[
-          set place-type "link"
-        ]
       ]
+      ask my-links[
+        show-link
+    ]
       show-turtle
     ]
   ]
