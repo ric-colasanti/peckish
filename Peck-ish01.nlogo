@@ -82,9 +82,11 @@ to go
   tick
   if ticks >= iterations[
     show-stats
-    stop
+   stop
   ]
 end
+
+
 
 to show-stats
 ask places [
@@ -110,6 +112,8 @@ ask places [
     ]
     output-write "exposure "
     output-print hub-visit
+
+
   ]
 end
 @#$#@#$#@
@@ -183,7 +187,7 @@ population
 population
 1
 50
-13.0
+50.0
 1
 1
 NIL
@@ -228,7 +232,7 @@ hub-links
 hub-links
 1
 100
-20.0
+49.0
 1
 1
 NIL
@@ -249,12 +253,30 @@ SLIDER
 iterations
 iterations
 0
+5000
+1000.0
 100
-9.0
-1
 1
 NIL
 HORIZONTAL
+
+PLOT
+663
+16
+1037
+426
+position
+Exposure
+Number of People
+0.0
+200.0
+0.0
+50.0
+true
+false
+"set-plot-x-range 0 iterations / 10\nset-plot-y-range 0 count people\nset-histogram-num-bars 5" ""
+PENS
+"people" 1.0 1 -3844592 true "" "histogram [hub-visit] of people"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -302,7 +324,6 @@ The occurrence of arrows at the hubs. Each person has a counter attached to them
 ## CREDITS AND REFERENCES
 
 (a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
-
 
 @#$#@#$#@
 default
