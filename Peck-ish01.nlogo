@@ -28,7 +28,11 @@ to setup
     ask one-of places [
       set place-type "hub"
       repeat hub-links[
-        create-link-with one-of places
+        let target  one-of places
+        create-link-with target
+        ask target[
+          set place-type "link"
+        ]
       ]
       show-turtle
     ]
@@ -43,6 +47,7 @@ create-people population [
     move-to location
     ask location[
       show-turtle
+      set color green
     ]
   ]
   reset-ticks
@@ -75,8 +80,38 @@ to go
 
   ]
   tick
+  if ticks >= iterations[
+    show-stats
+    stop
+  ]
 end
 
+to show-stats
+ask places [
+    if place-type = "hub" [
+      output-write "hub pos :"
+      output-write xcor
+      output-write ycor
+      output-print ""
+    ]
+    if place-type = "link" [
+      output-write "link pos :"
+      output-write xcor
+      output-write ycor
+      output-print ""
+    ]
+  ]
+  ask people[
+    output-write "agent "
+    ask person-home[
+      output-write "home"
+      output-write xcor
+      output-write ycor
+    ]
+    output-write "exposure "
+    output-print hub-visit
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -95,10 +130,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+0
+32
+0
+32
 1
 1
 1
@@ -106,10 +141,10 @@ ticks
 30.0
 
 BUTTON
-10
-60
-190
-120
+12
+12
+192
+72
 setup
 setup
 NIL
@@ -123,10 +158,10 @@ NIL
 1
 
 BUTTON
-10
-135
-190
-195
+12
+87
+192
+147
 go
 go
 T
@@ -148,7 +183,7 @@ population
 population
 1
 50
-5.0
+13.0
 1
 1
 NIL
@@ -170,30 +205,52 @@ NIL
 HORIZONTAL
 
 SLIDER
-19
-322
-191
-355
+15
+321
+187
+354
 day-movement
 day-movement
 1
 50
-5.0
+4.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-15
-377
-187
-410
+11
+376
+183
+409
 hub-links
 hub-links
 1
 100
-40.0
+20.0
+1
+1
+NIL
+HORIZONTAL
+
+OUTPUT
+23
+484
+870
+757
+12
+
+SLIDER
+15
+177
+187
+210
+iterations
+iterations
+0
+100
+9.0
 1
 1
 NIL
