@@ -334,7 +334,7 @@ TEXTBOX
 652
 828
 757
-Green squares are agent home numbers show hamany times ajent has visited a pecks\nBlue squares are hubs\nPurple Pecks numbers are the number of customers ( an agent will only visit maximum of one per day )\n\n
+Green squares are agent home numbers show how many times agent has visited a pecks\nBlue squares are hubs\nPurple Pecks numbers are the number of customers ( an agent will only visit maximum of one per day )\n\n
 12
 0.0
 1
