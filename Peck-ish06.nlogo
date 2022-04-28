@@ -1,15 +1,120 @@
 breed [nodes node]
-breed [walkers walker]
-walkers-own [location w-home daily-moves]  ;; holds a node
+breed [hubs hub]
+breed[pecks peck]
+pecks-own[ customers ]
+
+breed [people person]
+people-own [location p-home daily-moves p-visits eat?]  ;; holds a node
 
 directed-link-breed [active-links active-link]
 
-patches-own [ visits p-type]
+patches-own [visits p-type]
 
-to setup
-  clear-all
+globals[
+  running?
+  flag?
+]
+
+;; ************************ PEOPLE BREED METHODS
+to people-move
+  ask people [
+    let agent self
+    ;; the person will only randomly move MOVE_PER_DAY per day the return home
+    ifelse daily-moves < moves-per-day [
+      ;; randomly move
+      let targets [out-active-link-neighbors] of location
+      if count targets > 0 [
+        let new-location one-of targets
+        face new-location  ;; not strictly necessary, but improves the visuals a bit
+        set location new-location
+        set daily-moves daily-moves + 1
+     ]
+    ][
+      ;; go home
+      set daily-moves 0
+      set eat? false
+      set location p-home
+    ]  ;; end if
+    ;; do the move
+    move-to location
+
+    ask patch-here [
+      if p-type = "urban" [
+        set visits visits + 1
+      ]
+    ]
+    ;; check if there is a Pecks here
+    ask pecks-here[
+      ;; test if the person has been to pecks that day
+      if [eat?] of agent = false [
+        set customers customers + 1
+        set label  word customers " "
+        ask agent [
+         set eat?  true
+         set p-visits p-visits + 1
+        ]
+      ]
+    ]
+
+    ;; set the lable of the persons home to be the total number of times they have visited a Pecks
+    ask p-home [
+      set label [p-visits ] of agent
+    ]
+
+  ]
+end
+
+
+to setup-people
+  create-people number-of-people [
+    ;; create a person
+    set color yellow
+    set shape "default"
+    ;; set the DAILy_MOVES counter to 0
+    set daily-moves 0
+    ;; pick a random node for its home
+    set eat? true
+    set p-visits 0
+    set location one-of nodes
+    ask location [
+      ;; set node  color to green to show it is a home
+      set color green
+      ;; make size larger so  it will show up
+      set size 1
+      show-turtle
+      ask patch-here [
+          set p-type "home" ;; used for display
+      ]
+    ]
+    set p-home location
+    ;; move our new person into their nice new shiney home
+    move-to location
+  ]
+end
+
+
+;; ************************ PECKS BREED METHODS
+to build-pecks
+if mouse-down? [
+     ask nodes-on patch mouse-xcor mouse-ycor [
+      set breed pecks
+      set shape "square"
+      set color 87
+      set label-color black
+      set size 1
+      set customers 0
+      show-turtle
+      set label customers
+    ]
+   ]
+  reset-ticks
+end
+
+;; ************************ NODE BREED METHODS
+to setup-nodes
+  ;; create patches and add a node in each patch
+  ;; a node is a position on the map that people can move to
   set-default-shape nodes "circle"
-  ;; create a random network
   ask patches [
     set visits 0
     set p-type "urban"
@@ -18,109 +123,136 @@ to setup
       set size 0.3
     ]
   ]
+end
 
-
+to setup-link-nodes
+  ;; note that this has to be done after all the nodes have been created
   ask nodes [
+    ;; ask each node to link to the 4 von Numann neighbor patches to the patch that he node is on.  "node-on"
     let targets nodes-on neighbors4
+    ;; the links are directonal ie onlt to the target not from the target back
     create-active-links-to turtle-set targets
     ask my-links[
+      ;; dont show the local neighbour links
         hide-link
     ]
+    ;; dont show the nodes
     hide-turtle
   ]
-  repeat 4[
-  let hub one-of nodes
-  ask hub [
-    set color yellow
-    ask patch-here [
-      set p-type "hub"
-        set pcolor blue
-    ]
-  ]
+end
 
-  repeat 60 [
+;; ************************ HUB BREED METHODS
+to setup-hubs
+  repeat number-of-hubs[
+    ;;select a node at random
     ask one-of nodes [
-      if self != hub [
-        set color white
-        show-turtle
-        create-active-link-to hub
-      ]
-    ]
-  ]
-  ]
-  if show-links = false [
-    ask nodes [
-      ask my-links[
-        hide-link
-      ]
-    ]
-  ]
-  ;; lay it out so links are not overlapping
-  create-walkers 100 [
-    set color yellow
-    set daily-moves 0
-    set location one-of nodes
-    ask location [
-      set color green
-      set size 0.5
-      show-turtle
       ask patch-here [
-          set p-type "home"
+        set p-type "hub" ;set the patch p-type id to hub this is used in the display
       ]
-
+      set breed hubs
+      set shape "circle"
+      set color 85
+      set size 1
+      show-turtle
     ]
-    set w-home location
-    move-to location
   ]
-  reset-ticks
 end
 
-to layout
-  layout-spring nodes links 0.5 2 1
-end
-
-to go
-  ask walkers [
-    ifelse daily-moves < 10 [
-      let recipients [out-active-link-neighbors] of location
-      if count recipients > 0 [
-        let new-location one-of recipients
-        face new-location  ;; not strictly necessary, but improves the visuals a bit
-        set location new-location
-        set daily-moves daily-moves + 1
-     ]
-  ][
-    set daily-moves 0
-      set location w-home
-    ]
-    ask patch-here [
-      if p-type = "urban" [
-        set visits visits + 1
+to setup-link-hubs
+  ask hubs[
+    let target self
+    ;; create links to the hub from  NUMBER-OF-LINKS random other nodes
+    let links-to random ( max-number-of-links - min-number-of-links ) + min-number-of-links
+    repeat links-to [
+      ask one-of nodes [
+        ;; tset that it is not linking to its's self
+        if self != target [
+          set color white
+          show-turtle
+          ;; This is a directional link from the random node to the hub
+          create-active-link-to target[
+            set shape "bus-link"
+            set thickness 0.005
+          ]
+        ]
       ]
     ]
-    move-to location
   ]
+end
+
+
+;; ************************ DISPLAY METHODS
+to patch-display
+  ;; color only the urban patches with a red color propotional to the number of visits
   ask patches [
     if p-type = "urban" [
-      set pcolor scale-color red visits 0 max [visits] of patches + 1
+      set pcolor scale-color red visits 0 ( max [visits] of patches )
     ]
   ]
+end
+
+
+to reset
+clear-all
+reset-ticks
+  set flag? false
+end
+
+
+to setup
+  clear-all
+  setup-nodes
+  setup-link-nodes
+  setup-hubs
+  setup-link-hubs
+  setup-people
+  reset-ticks
+  set flag? true
+  set running? false
+end
+
+
+
+to iterate
+  people-move
+  patch-display
   tick
 end
 
+to go
+  ;; netlogo needs to be running and ticks updated for the mouse down to work
+  ifelse flag? = true[
+    ifelse running? = true [
+      iterate
+    ][
+      build-pecks
+    ]
+  ][
+    setup
+  ]
+end
+
+
+to start-run
+  set running? true
+end
+
+to stop-run
+  set running? false
+end
 
 ; Public Domain:
 ; To the extent possible under law, Uri Wilensky has waived all
 ; copyright and related or neighboring rights to this model.
 @#$#@#$#@
 GRAPHICS-WINDOW
-155
-10
-599
-455
+340
+25
+1128
+814
 -1
 -1
-10.63415
+19.0244
 1
 10
 1
@@ -140,83 +272,251 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
-BUTTON
-32
-55
-116
-88
-NIL
-setup
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-32
-125
-116
-158
-NIL
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-0
-
-BUTTON
-32
-90
-116
-123
-go once
-go
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-0
-
 SWITCH
-12
-184
-143
-217
+170
+320
+301
+353
 show-links
 show-links
-1
+0
 1
 -1000
+
+SLIDER
+25
+165
+210
+198
+number-of-people
+number-of-people
+1
+100
+32.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+25
+205
+210
+238
+number-of-hubs
+number-of-hubs
+0
+10
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+24
+244
+301
+277
+max-number-of-links
+max-number-of-links
+min-number-of-links
+60
+52.0
+1
+1
+bus-stops
+HORIZONTAL
+
+SLIDER
+24
+281
+301
+314
+min-number-of-links
+min-number-of-links
+0
+max-number-of-links
+20.0
+1
+1
+bus-stops
+HORIZONTAL
+
+SLIDER
+25
+320
+160
+353
+moves-per-day
+moves-per-day
+1
+40
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+25
+365
+110
+398
+initilise
+go\n
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+120
+365
+187
+398
+NIL
+reset\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+25
+405
+117
+438
+NIL
+start-run
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+0
+
+BUTTON
+120
+405
+212
+438
+NIL
+stop-run
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+0
+
+TEXTBOX
+55
+55
+205
+96
+Pecks
+38
+0.0
+1
+
+TEXTBOX
+430
+835
+1015
+921
+Green circles are agent home numbers show how many times agent has visited a Pecks\nBlue circles are travle hubs\nLight blue square are Pecks. The numbers are the number of customers ( a person will only visit maximum of one per day )\nWhite dots are bus stops
+12
+0.0
+1
+
+TEXTBOX
+25
+450
+300
+536
+Click initialise on ( goes black ) to place a pecks with your mouse.\nClick initialise off ( goes grey ) before redoing set up\n
+12
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
 
-This example shows how to make turtles "walk" from node to node on a network, by following links.
+Where is the best place to build a Pecks fast food outlet?
+
+## HOW IT WORKS
+
+Initilise (SETUP)
+Set all patches to P-TYPE urban
+Add 4 nearest neighbours to a patches CONNECTIONS
+
+Create NUMBER-OF-PEOPLE people place them randomly in a patch and set that patch as the persons PERSON-HOME set that pac P-TYE as “home” set color green set the persons
+Each person randomly moves MOVES-PER-DAY times and then goes HOME
+A person will only visit a Pecks a maximum of onec pre day 
+
+Select NUMBER-OF-HUBS patches as hubs set the P-TYPE of that patch as “hub” randomly choose between MIN-NUMBER-OF-LINKS and MAX-NUMBER-OF-LINKS and add the hub pach to their CONNECTIONS
+
+
+Iterate (GO)
+For each person move to one of the patches that are in its current patches CONNECTIONS. Add one to the VISITS of the patch that the personis moving to. Add one to the MOVES value of the person
+If the MOVES value is greater than the MOVES-PER-DAY move back to the persons PERSON-HOME patch
+If the person visits a PECKS and it has not visited a PECKS that day the CUSTOMES value of the PECKS wil be increased by one and the P-VIST value of the person will also be increased by one
+
+For all patches if the patch is P-TYPE urban the set color to be proporinata to number of visits.
+
+
+## HOW TO USE IT
+
+Click initialise on ( goes black ) to place a pecks with your mouse.
+Click initialise off ( goes grey ) before redoing set up
+
+
+## THINGS TO NOTICE
+
+Green circles are agent home numbers show how many times agent has visited a Pecks
+Blue circles are travle hubs
+Light blue square are Pecks. The numbers are the number of customers ( a person will only visit maximum of one per day )
+White dots are bus stops
+
+
+## THINGS TO TRY
+
+(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
 
 ## EXTENDING THE MODEL
 
-Animate the turtles as they move from node to node.
+(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+
+## NETLOGO FEATURES
+
+(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
 
 ## RELATED MODELS
 
-* Lattice-Walking Turtles Example
-* Grid-Walking Turtles Example
+(models in the NetLogo Models Library and elsewhere which are of related interest)
 
-<!-- 2007 -->
+## CREDITS AND REFERENCES
+
+(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+
+
 @#$#@#$#@
 default
 true
@@ -511,13 +811,23 @@ setup
 default
 0.0
 -0.2 0 0.0 1.0
-0.0 1 1.0 0.0
+0.0 1 2.0 2.0
 0.2 0 0.0 1.0
+link direction
+false
+13
+Line -7500403 false -87 222 -147 252
+Line -7500403 false 441 201 501 231
+Line -7500403 false -170 146 -124 166
+
+bus-link
+0.0
+-0.2 0 0.0 1.0
+0.0 0 0.0 1.0
+0.2 1 2.0 2.0
 link direction
 true
 0
-Line -7500403 true 150 150 90 180
-Line -7500403 true 150 150 210 180
 @#$#@#$#@
-0
+1
 @#$#@#$#@
