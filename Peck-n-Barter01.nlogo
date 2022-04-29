@@ -486,7 +486,7 @@ TEXTBOX
 170
 285
 300
-Can we offset the effect of Pecks on the exposure of the population by placing community run good food outlets?   \nThe agents will only go to one outlet per day.\n\"[In] 1940, working in exchange for food [Gregory Peck acted] at the Barter Theatre in Abingdon, Virginia, \" wikipedia
+Can the effect of Pecks on the exposure of the population be offset by placing community run good food outlets?   \nThe agents will only go to one outlet per day.\n\"[In] 1940, working in exchange for food [Gregory Peck acted] at the Barter Theatre in Abingdon, Virginia, \" wikipedia
 12
 0.0
 1
