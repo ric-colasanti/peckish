@@ -64,6 +64,7 @@ to people-move
       if [eat?] of agent = false [
         set customers customers + 1
         set label  word customers " "
+        ;; if the person ges to a Barer then the EAT is set but their exposure counter is not incremented
         ask agent [
          set eat?  true
         ]
@@ -107,7 +108,7 @@ to setup-people
 end
 
 
-;; ************************ PECKS BREED METHODS
+;; ************************ PECKS and BARTERS BREED METHODS
 to build-outlet
 if mouse-down? [
      ask nodes-on patch mouse-xcor mouse-ycor [
@@ -478,13 +479,13 @@ CHOOSER
 outlet
 outlet
 "Pecks" "Barter"
-1
+0
 
 TEXTBOX
 25
 170
 285
-325
+300
 Can we offset the effect of Pecks on the exposure of the population by placing community run good food outlets?   \nThe agents will only go to one outlet per day.\n\"[In] 1940, working in exchange for food [Gregory Peck acted] at the Barter Theatre in Abingdon, Virginia, \" wikipedia
 12
 0.0
@@ -514,6 +515,7 @@ Iterate (GO)
 For each person move to one of the patches that are in its current patches CONNECTIONS. Add one to the VISITS of the patch that the personis moving to. Add one to the MOVES value of the person
 If the MOVES value is greater than the MOVES-PER-DAY move back to the persons PERSON-HOME patch
 If the person visits a PECKS and it has not visited a PECKS that day the CUSTOMES value of the PECKS wil be increased by one and the P-VIST value of the person will also be increased by one
+if the person goes to a BARTER then the EAT is set but their exposure counter is not incremented
 
 For all patches if the patch is P-TYPE urban the set color to be proporinata to number of visits.
 
