@@ -19,56 +19,78 @@ globals[
 ]
 
 ;; ************************ PEOPLE BREED METHODS
+
+to random-location
+  let targets [out-active-link-neighbors] of location
+  if count targets > 0 [
+    let new-location one-of targets
+    face new-location  ;; not strictly necessary, but improves the visuals a bit
+    set location new-location
+    set daily-moves daily-moves + 1
+ ]
+end
+
+to go-home
+  set daily-moves 0
+  set eat? false
+  set location p-home
+end
+
+to test-urban
+  if p-type = "urban" [
+    set visits visits + 1
+  ]
+end
+
+to test-pecks [agent]
+  ;; test if the person has been to outlet that day
+  if[ eat? ] of agent = false [
+        set customers customers + 1
+        set label  word customers " "
+        ask agent [
+          set eat?  true
+          set p-visits p-visits + 1
+        ]
+   ]
+end
+
+to test-barter[agent]
+  ;; test if the person has been to outlet that day
+  if[ eat? ] of agent = false [
+        set customers customers + 1
+        set label  word customers " "
+        ask agent [
+          set eat?  true
+        ]
+      ]
+end
+
 to people-move
   ask people [
     let agent self
     ;; the person will only randomly move MOVE_PER_DAY per day the return home
     ifelse daily-moves < moves-per-day [
       ;; randomly move
-      let targets [out-active-link-neighbors] of location
-      if count targets > 0 [
-        let new-location one-of targets
-        face new-location  ;; not strictly necessary, but improves the visuals a bit
-        set location new-location
-        set daily-moves daily-moves + 1
-     ]
+      random-location
     ][
       ;; go home
-      set daily-moves 0
-      set eat? false
-      set location p-home
-    ]  ;; end if
+      go-home
+    ]
     ;; do the move
     move-to location
 
+    ;; if location a urban patch then update
     ask patch-here [
-      if p-type = "urban" [
-        set visits visits + 1
-      ]
+      test-urban
     ]
     ;; check if there is a Pecks here
     ask pecks-here[
-      ;; test if the person has been to outlet that day
-      if [eat?] of agent = false [
-        set customers customers + 1
-        set label  word customers " "
-        ask agent [
-         set eat?  true
-         set p-visits p-visits + 1
-        ]
-      ]
+      test-pecks agent
     ]
     ;; check if there is a Barter here
     ask barters-here[
       ;; test if the person has been to outlet that day
-      if [eat?] of agent = false [
-        set customers customers + 1
-        set label  word customers " "
-        ;; if the person ges to a Barer then the EAT is set but their exposure counter is not incremented
-        ask agent [
-         set eat?  true
-        ]
-      ]
+      test-barter agent
     ]
 
     ;; set the lable of the persons home to be the total number of times they have visited a Pecks
@@ -85,21 +107,20 @@ to setup-people
     ;; create a person
     set color yellow
     set shape "default"
-    ;; set the DAILy_MOVES counter to 0
+    ;; set the DAILY-MOVES counter to 0
     set daily-moves 0
     ;; pick a random node for its home
     set eat? true
     set p-visits 0
-    set location one-of nodes
+    set location one-of nodes  ;;pick a node at reandom
     ask location [
       ;; set node  color to green to show it is a home
       set color green
       ;; make size larger so  it will show up
       set size 1
       show-turtle
-      ask patch-here [
-          set p-type "home" ;; used for display
-      ]
+      ;; the turtle has access to the patch variable where it is located
+      set p-type "home" ;; used for display
     ]
     set p-home location
     ;; move our new person into their nice new shiney home
@@ -114,23 +135,17 @@ if mouse-down? [
      ask nodes-on patch mouse-xcor mouse-ycor [
       ifelse outlet = "Pecks"[
         set breed pecks
-        set shape "square"
         set color 87
-        set label-color black
-        set size 1
-        set customers 0
-        show-turtle
-        set label customers
       ][
         set breed barters
-        set shape "square"
         set color 45
-        set label-color black
-        set size 1
-        set customers 0
-        show-turtle
-        set label customers
       ]
+      set shape "square"
+      set label-color black
+      set size 1
+      set customers 0
+      show-turtle
+      set label customers
    ]
   ]
   reset-ticks
@@ -145,8 +160,8 @@ to setup-nodes
     set visits 0
     set p-type "urban"
     sprout-nodes 1 [
-      set color blue
-      set size 0.3
+      ;; hide the standard place node
+      hide-turtle
     ]
   ]
 end
@@ -155,15 +170,13 @@ to setup-link-nodes
   ;; note that this has to be done after all the nodes have been created
   ask nodes [
     ;; ask each node to link to the 4 von Numann neighbor patches to the patch that he node is on.  "node-on"
-    let targets nodes-on neighbors4
+    let targets nodes-on neighbors
     ;; the links are directonal ie onlt to the target not from the target back
     create-active-links-to turtle-set targets
     ask my-links[
       ;; dont show the local neighbour links
         hide-link
     ]
-    ;; dont show the nodes
-    hide-turtle
   ]
 end
 
@@ -172,9 +185,7 @@ to setup-hubs
   repeat number-of-hubs[
     ;;select a node at random
     ask one-of nodes [
-      ask patch-here [
-        set p-type "hub" ;set the patch p-type id to hub this is used in the display
-      ]
+      set p-type "hub" ;set the patch p-type id to hub this is used in the display
       set breed hubs
       set shape "circle"
       set color 85
@@ -190,16 +201,14 @@ to setup-link-hubs
     ;; create links to the hub from  NUMBER-OF-LINKS random other nodes
     let links-to random ( max-number-of-links - min-number-of-links ) + min-number-of-links
     repeat links-to [
-      ask one-of nodes [
-        ;; tset that it is not linking to its's self
-        if self != target [
-          set color white
-          show-turtle
-          ;; This is a directional link from the random node to the hub
-          create-active-link-to target[
-            set shape "bus-link"
-            set thickness 0.005
-          ]
+      ask one-of nodes with  [ p-type = "urban" ][
+        set color white
+        set size 0.3
+        show-turtle
+        ;; This is a directional link from the random node to the hub
+        create-active-link-to target[
+          set shape "bus-link"
+          set thickness 0.005
         ]
       ]
     ]
@@ -210,10 +219,8 @@ end
 ;; ************************ DISPLAY METHODS
 to patch-display
   ;; color only the urban patches with a red color propotional to the number of visits
-  ask patches [
-    if p-type = "urban" [
+  ask patches with [ p-type = "urban"] [
       set pcolor scale-color red visits 0 ( max [visits] of patches )
-    ]
   ]
 end
 
@@ -300,14 +307,14 @@ ticks
 
 SLIDER
 25
-310
+330
 210
-343
+363
 number-of-people
 number-of-people
 1
 100
-60.0
+50.0
 1
 1
 NIL
@@ -315,9 +322,9 @@ HORIZONTAL
 
 SLIDER
 25
-350
+370
 210
-383
+403
 number-of-hubs
 number-of-hubs
 0
@@ -330,14 +337,14 @@ HORIZONTAL
 
 SLIDER
 24
-389
+409
 301
-422
+442
 max-number-of-links
 max-number-of-links
 min-number-of-links
 60
-20.0
+30.0
 1
 1
 bus-stops
@@ -345,9 +352,9 @@ HORIZONTAL
 
 SLIDER
 24
-426
+446
 301
-459
+479
 min-number-of-links
 min-number-of-links
 0
@@ -360,9 +367,9 @@ HORIZONTAL
 
 SLIDER
 25
-465
+485
 160
-498
+518
 moves-per-day
 moves-per-day
 1
@@ -375,9 +382,9 @@ HORIZONTAL
 
 BUTTON
 25
-565
+585
 110
-598
+618
 initilise
 go\n
 T
@@ -392,9 +399,9 @@ NIL
 
 BUTTON
 120
-565
+585
 187
-598
+618
 NIL
 reset\n
 NIL
@@ -409,9 +416,9 @@ NIL
 
 BUTTON
 25
-605
+625
 117
-638
+658
 NIL
 start-run
 NIL
@@ -426,9 +433,9 @@ NIL
 
 BUTTON
 120
-605
+625
 212
-638
+658
 NIL
 stop-run
 NIL
@@ -455,17 +462,17 @@ TEXTBOX
 345
 835
 1015
-921
-Green circles are agent home numbers show how many times agent has visited a Pecks\nBlue circles are travle hubs\nLight blue square are Pecks. The numbers are the number of customers. Yellow square are Barter's. The numbers are the number of customers ( a person will only visit maximum of one outlet per day )\nWhite dots are bus stops
+930
+Green circles are agent home numbers show how many times agent has visited a Pecks\nBlue circles are travle hubs\nLight blue square are Pecks. The numbers are the number of customers. Yellow square are Barter's. The numbers are the number of customers ( a person will only visit maximum of one outlet [ a Pecks or a Barter ] per day )\nWhite dots are bus stops
 12
 0.0
 1
 
 TEXTBOX
 25
-650
+670
 300
-775
+795
 Click initialise on ( goes black ) to place a Pecks or a Barter with your mouse.\nChoose  which with the outlet chooser above\nClick initialise off ( goes grey ) before redoing set up\n
 12
 0.0
@@ -473,9 +480,9 @@ Click initialise on ( goes black ) to place a Pecks or a Barter with your mouse.
 
 CHOOSER
 25
-510
+530
 163
-555
+575
 outlet
 outlet
 "Pecks" "Barter"
@@ -484,25 +491,27 @@ outlet
 TEXTBOX
 25
 170
-285
-300
-Can the effect of Pecks on the exposure of the population be offset by placing community run good food outlets?   \nThe agents will only go to one outlet per day.\n\"[In] 1940, working in exchange for food [Gregory Peck acted] at the Barter Theatre in Abingdon, Virginia, \" wikipedia
+315
+331
+Can the effect of Pecks (a  high calorific food outlet named after another famous Greg, Gregory Peck ) on the exposure of the population be offset by placing community run good food outlet? (A Barter )  \nThe agents will only go to one outlet per day.\n\"[In] 1940, working in exchange for food [Gregory Peck acted] at the Barter Theatre in Abingdon, Virginia, \" wikipedia
 12
 0.0
 1
 
 @#$#@#$#@
 ## WHAT IS IT?
-
-Can we do berrt tah a Pecks?
+This is a simple model of food outlet placement. With special attention to travel hubs.
+A Pecks is high calorific food outlet named after another famous Greg Gregecory Peck
+There is an alternative to a Peck
 Where is the best place to build a Barter community good food outlet?
 "[In] 1940, working in exchange for food [Gregory Peck acted] at the Barter Theatre in Abingdon, Virginia, " wikipedia
+
 
 ## HOW IT WORKS
 
 Initilise (SETUP)
 Set all patches to P-TYPE urban
-Add 4 nearest neighbours to a patches CONNECTIONS
+Add 8 nearest neighbours to a patches CONNECTIONS
 
 Create NUMBER-OF-PEOPLE people place them randomly in a patch and set that patch as the persons PERSON-HOME set that pac P-TYE as “home” set color green set the persons
 Each person randomly moves MOVES-PER-DAY times and then goes HOME
@@ -553,7 +562,6 @@ White dots are bus stops
 ## CREDITS AND REFERENCES
 
 (a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
-
 @#$#@#$#@
 default
 true
