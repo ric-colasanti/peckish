@@ -141,11 +141,6 @@ to setup-link-nodes
   ]
 end
 
-;; ************************ HUB BREED METHODS
-
-
-
-
 
 ;; ************************ DISPLAY METHODS
 to patch-display
@@ -198,25 +193,41 @@ end
 
 
 to start-run
+  clear-output
+  clear-plot
   set running? true
 end
 
 to stop-run
   set running? false
+  show-stats
 end
 
+
+to show-stats
+  ask people[
+    output-write "agent "
+    ask p-home[
+      output-write "home"
+      output-write xcor
+      output-write ycor
+    ]
+    output-write "exposure "
+    output-print p-visits
+  ]
+end
 ; Public Domain:
-; To the extent possible under law, Uri Wilensky has waived all
+; To the extent possible under law, Ricardo Colasanti has waived all
 ; copyright and related or neighboring rights to this model.
 @#$#@#$#@
 GRAPHICS-WINDOW
 340
 25
-1128
-814
+798
+484
 -1
 -1
-19.0244
+10.98
 1
 10
 1
@@ -260,7 +271,7 @@ moves-per-day
 moves-per-day
 1
 40
-2.0
+19.0
 1
 1
 NIL
@@ -363,6 +374,31 @@ Click initialise on ( goes black ) to place a bottleshop with your mouse.\nClick
 12
 0.0
 1
+
+OUTPUT
+20
+520
+1285
+780
+12
+
+PLOT
+815
+30
+1285
+470
+position
+Exposure
+People
+0.0
+10.0
+0.0
+10.0
+true
+false
+"set-plot-y-range 0 count people\nset-histogram-num-bars 5" ""
+PENS
+"default" 1.0 1 -5298144 true "" "histogram [p-visits] of people"
 
 @#$#@#$#@
 ## WHAT IS IT?
