@@ -238,9 +238,9 @@ ticks
 
 SLIDER
 25
-165
+270
 210
-198
+303
 number-of-people
 number-of-people
 1
@@ -260,7 +260,7 @@ moves-per-day
 moves-per-day
 1
 40
-10.0
+2.0
 1
 1
 NIL
@@ -359,7 +359,7 @@ TEXTBOX
 450
 300
 536
-Click initialise on ( goes black ) to place a pecks with your mouse.\nClick initialise off ( goes grey ) before redoing set up\n
+Click initialise on ( goes black ) to place a bottleshop with your mouse.\nClick initialise off ( goes grey ) before redoing set up\n
 12
 0.0
 1
@@ -367,7 +367,7 @@ Click initialise on ( goes black ) to place a pecks with your mouse.\nClick init
 @#$#@#$#@
 ## WHAT IS IT?
 
-Where is the best place to build a Pecks fast food outlet?
+See how many visits a bottle shop gets
 
 ## HOW IT WORKS
 
@@ -377,15 +377,12 @@ Add 4 nearest neighbours to a patches CONNECTIONS
 
 Create NUMBER-OF-PEOPLE people place them randomly in a patch and set that patch as the persons PERSON-HOME set that pac P-TYE as “home” set color green set the persons
 Each person randomly moves MOVES-PER-DAY times and then goes HOME
-A person will only visit a Pecks a maximum of onec pre day 
-
-Select NUMBER-OF-HUBS patches as hubs set the P-TYPE of that patch as “hub” randomly choose between MIN-NUMBER-OF-LINKS and MAX-NUMBER-OF-LINKS and add the hub pach to their CONNECTIONS
-
+A person will only visit a bottleshop a maximum of onec pre day 
 
 Iterate (GO)
 For each person move to one of the patches that are in its current patches CONNECTIONS. Add one to the VISITS of the patch that the personis moving to. Add one to the MOVES value of the person
 If the MOVES value is greater than the MOVES-PER-DAY move back to the persons PERSON-HOME patch
-If the person visits a PECKS and it has not visited a PECKS that day the CUSTOMES value of the PECKS wil be increased by one and the P-VIST value of the person will also be increased by one
+If the person visits a bottleshop and it has not visited a bottleshop that day the CUSTOMES value of the bottleshop wil be increased by one and the P-VIST value of the person will also be increased by one
 
 For all patches if the patch is P-TYPE urban the set color to be proporinata to number of visits.
 
@@ -399,8 +396,7 @@ Click initialise off ( goes grey ) before redoing set up
 ## THINGS TO NOTICE
 
 Green circles are agent home numbers show how many times agent has visited a Pecks
-Blue circles are travle hubs
-Light blue square are Pecks. The numbers are the number of customers ( a person will only visit maximum of one per day )
+Light blue square are bottleshop. The numbers are the number of customers ( a person will only visit maximum of one per day )
 White dots are bus stops
 
 
